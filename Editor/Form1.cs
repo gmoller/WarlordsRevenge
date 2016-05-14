@@ -17,112 +17,10 @@ namespace WarlordsRevengeEditor
             InitializeComponent();
             FillPaletteControl();
 
-            var hg = new HexGrid();
+            var hg = new HexGrid(3);
+            SetHexGrid(hg);
 
-            hg.Get(0, 0); // x;y
-            hg.Get(1, 0);
-            hg.Get(0, 1);
-            hg.Get(1, 1);
-
-            Console.WriteLine();
-
-            //hg.Get(0, 0, 0); // x;y;z
-            //hg.Get(1, 0, 0);
-            //hg.Get(2, 0, 0);
-
-            //hg.Get(0, 1, 0);
-            //hg.Get(1, 1, 0);
-            //hg.Get(2, 1, 0);
-
-            //hg.Get(0, 2, 0);
-            //hg.Get(1, 2, 0);
-            //hg.Get(2, 2, 0);
-
-            //hg.Get(0, 0, 1);
-            //hg.Get(1, 0, 1);
-            //hg.Get(2, 0, 1);
-
-            //hg.Get(0, 1, 1);
-            //hg.Get(1, 1, 1);
-            //hg.Get(2, 1, 1);
-
-            //hg.Get(0, 2, 1);
-            //hg.Get(1, 2, 1);
-            //hg.Get(2, 2, 1);
-
-            //hg.Get(0, 0, 2);
-            //hg.Get(1, 0, 2);
-            //hg.Get(2, 0, 2);
-
-            //hg.Get(0, 1, 2);
-            //hg.Get(1, 1, 2);
-            //hg.Get(2, 1, 2);
-
-            //hg.Get(0, 2, 2);
-            //hg.Get(1, 2, 2);
-            //hg.Get(2, 2, 2);
-
-            hg.Set(0, 0, 0, 1);
-            hg.Get(0, 0, 0); // 1
-
-            hg.Set(0, 1, -1, 2);
-            hg.Get(0, 1, -1); // 2
-
-            hg.Set(1, 0, -1, 3);
-            hg.Get(1, 0, -1); // 3
-            
-            hg.Set(1, -1, 0, 4);
-            hg.Get(1, -1, 0); // 4
-
-            hg.Set(0, -1, 1, 5);
-            hg.Get(0, -1, 1); // 5
-
-            hg.Set(-1, 0, 1, 6);
-            hg.Get(-1, 0, 1); // 6
-
-            hg.Set(-1, 1, 0, 7);
-            hg.Get(-1, 1, 0); // 7
-
-            hg.Set(-1, 2, -1, 8);
-            hg.Get(-1, 2, -1); // 8
-
-            hg.Set(0, 2, -2, 9);
-            hg.Get(0, 2, -2); // 9
-
-            hg.Set(1, 1, -2, 10);
-            hg.Get(1, 1, -2); // 10
-
-            hg.Set(2, 0, -2, 11);
-            hg.Get(2, 0, -2); // 11
-
-            hg.Set(2, -1, -1, 12);
-            hg.Get(2, -1, -1); // 12
-
-            hg.Set(2, -2, 0, 13);
-            hg.Get(2, -2, 0); // 13
-
-            hg.Set(1, -2, 1, 14);
-            hg.Get(1, -2, 1); // 14
-
-            hg.Set(0, -2, 2, 15);
-            hg.Get(0, -2, 2); // 15
-
-            hg.Set(-1, -1, 2, 16);
-            hg.Get(-1, -1, 2); // 16
-
-            hg.Set(-2, 0, 2, 17);
-            hg.Get(-2, 0, 2); // 17
-
-            hg.Set(-2, 1, 1, 18);
-            hg.Get(-2, 1, 1); // 18
-
-            hg.Set(-2, 2, 0, 19);
-            hg.Get(-2, 2, 0); // 19
-
-            hg.Set(0, 3, -3, 20);
-            hg.Get(0, 3, -3); // 20
-
-            Console.WriteLine();
+            pictureBox1.Image = hg.Render(imageList1);
         }
 
         private void FillPaletteControl()
@@ -197,6 +95,82 @@ namespace WarlordsRevengeEditor
         public int MakeLong(short lowPart, short highPart)
         {
             return (int)(((ushort)lowPart) | (uint)(highPart << 16));
+        }
+
+        private void Grid()
+        {
+            var g = new Grid();
+            g.Get(0, 0); // x;y
+            g.Get(1, 0);
+            g.Get(0, 1);
+            g.Get(1, 1);
+        }
+
+        private void SetHexGrid(HexGrid hg)
+        {
+            Console.WriteLine();
+
+            hg.SetCell(0, 0, 0, 1);
+            hg.GetCell(0, 0, 0); // 1
+
+            hg.SetCell(0, 1, -1, 2);
+            hg.GetCell(0, 1, -1); // 2
+
+            hg.SetCell(1, 0, -1, 3);
+            hg.GetCell(1, 0, -1); // 3
+
+            hg.SetCell(1, -1, 0, 4);
+            hg.GetCell(1, -1, 0); // 4
+
+            hg.SetCell(0, -1, 1, 5);
+            hg.GetCell(0, -1, 1); // 5
+
+            hg.SetCell(-1, 0, 1, 6);
+            hg.GetCell(-1, 0, 1); // 6
+
+            hg.SetCell(-1, 1, 0, 7);
+            hg.GetCell(-1, 1, 0); // 7
+
+            hg.SetCell(-1, 2, -1, 8);
+            hg.GetCell(-1, 2, -1); // 8
+
+            hg.SetCell(0, 2, -2, 9);
+            hg.GetCell(0, 2, -2); // 9
+
+            hg.SetCell(1, 1, -2, 10);
+            hg.GetCell(1, 1, -2); // 10
+
+            hg.SetCell(2, 0, -2, 11);
+            hg.GetCell(2, 0, -2); // 11
+
+            hg.SetCell(2, -1, -1, 12);
+            hg.GetCell(2, -1, -1); // 12
+
+            hg.SetCell(2, -2, 0, 13);
+            hg.GetCell(2, -2, 0); // 13
+
+            hg.SetCell(1, -2, 1, 14);
+            hg.GetCell(1, -2, 1); // 14
+
+            hg.SetCell(0, -2, 2, 15);
+            hg.GetCell(0, -2, 2); // 15
+
+            hg.SetCell(-1, -1, 2, 16);
+            hg.GetCell(-1, -1, 2); // 16
+
+            hg.SetCell(-2, 0, 2, 17);
+            hg.GetCell(-2, 0, 2); // 17
+
+            hg.SetCell(-2, 1, 1, 18);
+            hg.GetCell(-2, 1, 1); // 18
+
+            hg.SetCell(-2, 2, 0, 19);
+            hg.GetCell(-2, 2, 0); // 19
+
+            hg.SetCell(0, 3, -3, 20);
+            hg.GetCell(0, 3, -3); // 20
+
+            Console.WriteLine();
         }
     }
 }
