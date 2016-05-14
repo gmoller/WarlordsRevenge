@@ -1,0 +1,2 @@
+C:\Source\WarlordsRevenge\Editor\Editor\bin\Debug\Editor.exe.config
+C:\Source\WarlordsRevenge\Editor\bin\Debug\Editor.exe.config

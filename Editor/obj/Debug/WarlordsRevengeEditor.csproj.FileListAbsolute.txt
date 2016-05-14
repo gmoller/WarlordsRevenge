@@ -1,0 +1,9 @@
+C:\Source\WarlordsRevenge\Editor\bin\Debug\WarlordsRevengeEditor.exe.config
+C:\Source\WarlordsRevenge\Editor\bin\Debug\WarlordsRevengeEditor.exe
+C:\Source\WarlordsRevenge\Editor\bin\Debug\WarlordsRevengeEditor.pdb
+C:\Source\WarlordsRevenge\Editor\obj\Debug\WarlordsRevengeEditor.csprojResolveAssemblyReference.cache
+C:\Source\WarlordsRevenge\Editor\obj\Debug\WarlordsRevengeEditor.Properties.Resources.resources
+C:\Source\WarlordsRevenge\Editor\obj\Debug\WarlordsRevengeEditor.csproj.GenerateResource.Cache
+C:\Source\WarlordsRevenge\Editor\obj\Debug\WarlordsRevengeEditor.exe
+C:\Source\WarlordsRevenge\Editor\obj\Debug\WarlordsRevengeEditor.pdb
+C:\Source\WarlordsRevenge\Editor\obj\Debug\WarlordsRevengeEditor.Form1.resources
