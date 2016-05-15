@@ -12,15 +12,21 @@ namespace WarlordsRevengeEditor
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
+        private HexGrid _grid;
+        private int _x;
+        private int _y;
+
         public Form1()
         {
             InitializeComponent();
             FillPaletteControl();
 
-            var hg = new HexGrid(3);
-            SetHexGrid(hg);
+            _grid = new HexGrid(5, 700, 700);
+            SetHexGrid(_grid);
 
-            pictureBox1.Image = hg.Render(imageList1);
+            pictureBox1.Image = _grid.Render(imageList1);
+
+            SetScrollBars();
         }
 
         private void FillPaletteControl()
@@ -97,15 +103,6 @@ namespace WarlordsRevengeEditor
             return (int)(((ushort)lowPart) | (uint)(highPart << 16));
         }
 
-        private void Grid()
-        {
-            var g = new Grid();
-            g.Get(0, 0); // x;y
-            g.Get(1, 0);
-            g.Get(0, 1);
-            g.Get(1, 1);
-        }
-
         private void SetHexGrid(HexGrid hg)
         {
             Console.WriteLine();
@@ -171,6 +168,46 @@ namespace WarlordsRevengeEditor
             hg.GetCell(0, 3, -3); // 20
 
             Console.WriteLine();
+        }
+
+        private void hScrollBar1_Scroll(object sender, ScrollEventArgs e)
+        {
+            _x = hScrollBar1.Value;
+            pictureBox1.Refresh();
+        }
+
+        private void vScrollBar1_Scroll(object sender, ScrollEventArgs e)
+        {
+            _y = vScrollBar1.Value;
+            pictureBox1.Refresh();
+        }
+
+        private void pictureBox1_Paint(object sender, PaintEventArgs e)
+        {
+            pictureBox1.Image = _grid.Render(imageList1);
+            e.Graphics.DrawImage(pictureBox1.Image, e.ClipRectangle, _x, _y, e.ClipRectangle.Width, e.ClipRectangle.Height, GraphicsUnit.Pixel);
+        }
+
+        private void Form1_Resize(object sender, EventArgs e)
+        {
+        }
+
+        private void pictureBox1_Resize(object sender, EventArgs e)
+        {
+            SetScrollBars();
+            pictureBox1.Refresh();
+        }
+
+        private void SetScrollBars()
+        {
+            hScrollBar1.Width = pictureBox1.Width;
+            hScrollBar1.Left = pictureBox1.Left;
+            hScrollBar1.Top = pictureBox1.Bottom;
+            hScrollBar1.Maximum = pictureBox1.Image.Width - pictureBox1.Width;
+            vScrollBar1.Height = pictureBox1.Height;
+            vScrollBar1.Left = pictureBox1.Left + pictureBox1.Width;
+            vScrollBar1.Top = pictureBox1.Top;
+            vScrollBar1.Maximum = pictureBox1.Image.Height - pictureBox1.Height;
         }
     }
 }
