@@ -12,21 +12,22 @@ namespace WarlordsRevengeEditor
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
-        private HexGrid _grid;
-        private int _x;
-        private int _y;
+        private readonly HexGrid _grid;
+
+        private Point _panStartPoint;
 
         public Form1()
         {
             InitializeComponent();
             FillPaletteControl();
 
-            _grid = new HexGrid(5, 700, 700);
+            int size = 4;
+            float mapWidth = (size*2 + 2) * Constants.HEX_WIDTH * Constants.THREE_QUARTERS;
+            float mapHeight = (size*2 + 2) * Constants.HEX_HEIGHT;
+            _grid = new HexGrid(size, (int)mapWidth, (int)mapHeight);
             SetHexGrid(_grid);
 
             pictureBox1.Image = _grid.Render(imageList1);
-
-            SetScrollBars();
         }
 
         private void FillPaletteControl()
@@ -66,7 +67,7 @@ namespace WarlordsRevengeEditor
         private void AddImagesToListview(List<string> fileNames)
         {
             listView1.View = View.LargeIcon;
-            imageList1.ImageSize = new Size(72, 72);
+            imageList1.ImageSize = new Size((int)Constants.HEX_WIDTH, (int)Constants.HEX_HEIGHT);
             imageList1.ColorDepth = ColorDepth.Depth24Bit;
             listView1.LargeImageList = imageList1;
 
@@ -76,12 +77,7 @@ namespace WarlordsRevengeEditor
                 listView1.Items.Add(item);
             }
 
-            ListView_SetSpacing(listView1, 72 + 12, 72 + 4 + 20);
-        }
-
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Application.Exit();
+            ListView_SetSpacing(listView1, (int)Constants.HEX_WIDTH + 12, (int)Constants.HEX_HEIGHT + 4 + 20);
         }
 
         public void ListView_SetSpacing(ListView listview, short cx, short cy)
@@ -103,111 +99,127 @@ namespace WarlordsRevengeEditor
             return (int)(((ushort)lowPart) | (uint)(highPart << 16));
         }
 
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
         private void SetHexGrid(HexGrid hg)
         {
             Console.WriteLine();
 
-            hg.SetCell(0, 0, 0, 1);
-            hg.GetCell(0, 0, 0); // 1
+            hg.SetCell(new HexCube(0, 0, 0), 1);
+            hg.GetCell(new HexCube(0, 0, 0)); // 1
 
-            hg.SetCell(0, 1, -1, 2);
-            hg.GetCell(0, 1, -1); // 2
+            hg.SetCell(new HexCube(0, 1, -1), 2);
+            hg.GetCell(new HexCube(0, 1, -1)); // 2
 
-            hg.SetCell(1, 0, -1, 3);
-            hg.GetCell(1, 0, -1); // 3
+            hg.SetCell(new HexCube(1, 0, -1), 3);
+            hg.GetCell(new HexCube(1, 0, -1)); // 3
 
-            hg.SetCell(1, -1, 0, 4);
-            hg.GetCell(1, -1, 0); // 4
+            hg.SetCell(new HexCube(1, -1, 0), 4);
+            hg.GetCell(new HexCube(1, -1, 0)); // 4
 
-            hg.SetCell(0, -1, 1, 5);
-            hg.GetCell(0, -1, 1); // 5
+            hg.SetCell(new HexCube(0, -1, 1), 5);
+            hg.GetCell(new HexCube(0, -1, 1)); // 5
 
-            hg.SetCell(-1, 0, 1, 6);
-            hg.GetCell(-1, 0, 1); // 6
+            hg.SetCell(new HexCube(-1, 0, 1), 6);
+            hg.GetCell(new HexCube(-1, 0, 1)); // 6
 
-            hg.SetCell(-1, 1, 0, 7);
-            hg.GetCell(-1, 1, 0); // 7
+            hg.SetCell(new HexCube(-1, 1, 0), 7);
+            hg.GetCell(new HexCube(-1, 1, 0)); // 7
 
-            hg.SetCell(-1, 2, -1, 8);
-            hg.GetCell(-1, 2, -1); // 8
+            hg.SetCell(new HexCube(-1, 2, -1), 8);
+            hg.GetCell(new HexCube(-1, 2, -1)); // 8
 
-            hg.SetCell(0, 2, -2, 9);
-            hg.GetCell(0, 2, -2); // 9
+            hg.SetCell(new HexCube(0, 2, -2), 9);
+            hg.GetCell(new HexCube(0, 2, -2)); // 9
 
-            hg.SetCell(1, 1, -2, 10);
-            hg.GetCell(1, 1, -2); // 10
+            hg.SetCell(new HexCube(1, 1, -2), 10);
+            hg.GetCell(new HexCube(1, 1, -2)); // 10
 
-            hg.SetCell(2, 0, -2, 11);
-            hg.GetCell(2, 0, -2); // 11
+            hg.SetCell(new HexCube(2, 0, -2), 11);
+            hg.GetCell(new HexCube(2, 0, -2)); // 11
 
-            hg.SetCell(2, -1, -1, 12);
-            hg.GetCell(2, -1, -1); // 12
+            hg.SetCell(new HexCube(2, -1, -1), 12);
+            hg.GetCell(new HexCube(2, -1, -1)); // 12
 
-            hg.SetCell(2, -2, 0, 13);
-            hg.GetCell(2, -2, 0); // 13
+            hg.SetCell(new HexCube(2, -2, 0), 13);
+            hg.GetCell(new HexCube(2, -2, 0)); // 13
 
-            hg.SetCell(1, -2, 1, 14);
-            hg.GetCell(1, -2, 1); // 14
+            hg.SetCell(new HexCube(1, -2, 1), 14);
+            hg.GetCell(new HexCube(1, -2, 1)); // 14
 
-            hg.SetCell(0, -2, 2, 15);
-            hg.GetCell(0, -2, 2); // 15
+            hg.SetCell(new HexCube(0, -2, 2), 15);
+            hg.GetCell(new HexCube(0, -2, 2)); // 15
 
-            hg.SetCell(-1, -1, 2, 16);
-            hg.GetCell(-1, -1, 2); // 16
+            hg.SetCell(new HexCube(-1, -1, 2), 16);
+            hg.GetCell(new HexCube(-1, -1, 2)); // 16
 
-            hg.SetCell(-2, 0, 2, 17);
-            hg.GetCell(-2, 0, 2); // 17
+            hg.SetCell(new HexCube(-2, 0, 2), 17);
+            hg.GetCell(new HexCube(-2, 0, 2)); // 17
 
-            hg.SetCell(-2, 1, 1, 18);
-            hg.GetCell(-2, 1, 1); // 18
+            hg.SetCell(new HexCube(-2, 1, 1), 18);
+            hg.GetCell(new HexCube(-2, 1, 1)); // 18
 
-            hg.SetCell(-2, 2, 0, 19);
-            hg.GetCell(-2, 2, 0); // 19
+            hg.SetCell(new HexCube(-2, 2, 0), 19);
+            hg.GetCell(new HexCube(-2, 2, 0)); // 19
 
-            hg.SetCell(0, 3, -3, 20);
-            hg.GetCell(0, 3, -3); // 20
+            //hg.SetCell(new HexCube(0, 3, -3), 20);
+            //hg.GetCell(new HexCube(0, 3, -3)); // 20
+
+            //hg.SetCell(new HexCube(0, 5, -5), 6);
 
             Console.WriteLine();
         }
 
-        private void hScrollBar1_Scroll(object sender, ScrollEventArgs e)
+        private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            _x = hScrollBar1.Value;
-            pictureBox1.Refresh();
+            _panStartPoint = new Point(e.X, e.Y);
         }
 
-        private void vScrollBar1_Scroll(object sender, ScrollEventArgs e)
+        private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
-            _y = vScrollBar1.Value;
-            pictureBox1.Refresh();
+            statusStrip1.Items[0].Text = string.Format("Mouse Position: [X: {0} Y:{1}]", e.X, e.Y);
+            PointF offset = DetermineOffset(e.X, e.Y);
+            statusStrip1.Items[1].Text = string.Format("Offset From Center: [X: {0} Y:{1}]", offset.X, offset.Y);
+            HexCube cube = DetermineHexAtMousePointer(e.X, e.Y);
+            statusStrip1.Items[2].Text = string.Format("Selected Hex: [X: {0} Y:{1} Z:{2}]", cube.X, cube.Y, cube.Z);
+
+            if (e.Button == MouseButtons.Left)
+            {
+                int deltaX = _panStartPoint.X - e.X;
+                int deltaY = _panStartPoint.Y - e.Y;
+
+                panel1.AutoScrollPosition = new Point(deltaX - panel1.AutoScrollPosition.X, deltaY - panel1.AutoScrollPosition.Y);
+            }
         }
 
-        private void pictureBox1_Paint(object sender, PaintEventArgs e)
+        private PointF DetermineOffset(int mousePosX, int mousePosY)
         {
-            pictureBox1.Image = _grid.Render(imageList1);
-            e.Graphics.DrawImage(pictureBox1.Image, e.ClipRectangle, _x, _y, e.ClipRectangle.Width, e.ClipRectangle.Height, GraphicsUnit.Pixel);
+            var point = new PointF { X = mousePosX - _grid.Center.X, Y = mousePosY - _grid.Center.Y };
+
+            return point;
         }
 
-        private void Form1_Resize(object sender, EventArgs e)
+        private HexCube DetermineHexAtMousePointer(int mousePosX, int mousePosY)
         {
+            PointF offset = DetermineOffset(mousePosX, mousePosY);
+            HexCube cube = _grid.PixelToHex(offset);
+
+            return cube;
         }
 
-        private void pictureBox1_Resize(object sender, EventArgs e)
+        private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
-            SetScrollBars();
-            pictureBox1.Refresh();
-        }
+            if (listView1.SelectedItems.Count > 0)
+            {
+                int imageId = listView1.SelectedItems[0].ImageIndex;
+                HexCube cube = DetermineHexAtMousePointer(e.X, e.Y);
 
-        private void SetScrollBars()
-        {
-            hScrollBar1.Width = pictureBox1.Width;
-            hScrollBar1.Left = pictureBox1.Left;
-            hScrollBar1.Top = pictureBox1.Bottom;
-            hScrollBar1.Maximum = pictureBox1.Image.Width - pictureBox1.Width;
-            vScrollBar1.Height = pictureBox1.Height;
-            vScrollBar1.Left = pictureBox1.Left + pictureBox1.Width;
-            vScrollBar1.Top = pictureBox1.Top;
-            vScrollBar1.Maximum = pictureBox1.Image.Height - pictureBox1.Height;
+                _grid.SetCell(cube, imageId);
+                pictureBox1.Image = _grid.Render(imageList1);
+            }
         }
     }
 }

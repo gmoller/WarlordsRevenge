@@ -13,17 +13,19 @@ namespace WarlordsRevengeEditor
 
         public PointF[] GetCorners(PointF center)
         {
-            var corners = new PointF[6];
+            var corners = new PointF[7];
             for (int i = 1; i <= 6; i++)
             {
-                PointF corner = GetCorner(center, i);
-                corners[i - 1] = corner;
+                PointF corner = GetCorner(i);
+                var p = new PointF { X = center.X + corner.X, Y = center.Y + corner.Y };
+                corners[i - 1] = p;
             }
+            corners[6] = corners[0];
 
             return corners;
         }
 
-        private PointF GetCorner(PointF center, int corner)
+        private PointF GetCorner(int corner)
         {
             PointF p;
             switch (corner)
@@ -50,9 +52,7 @@ namespace WarlordsRevengeEditor
                     throw new NotSupportedException(string.Format("Corner {0} is not supported.", corner));
             }
 
-            var p2 = new PointF { X = center.X + p.X, Y = center.Y + p.Y };
-
-            return p2;
+            return p;
         }
 
         private PointF GetCorner1()
