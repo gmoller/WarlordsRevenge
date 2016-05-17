@@ -45,9 +45,10 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.MousePositionLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.OffsetFromCenterLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.SelectedHexLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.panel1 = new System.Windows.Forms.Panel();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.SelectedHexLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -83,18 +84,21 @@
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
             this.newToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
             this.newToolStripMenuItem.Text = "New";
+            this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
             // 
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
             this.openToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
             this.openToolStripMenuItem.Text = "Open";
+            this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
             this.saveToolStripMenuItem.Text = "Save";
+            this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
             // toolStripMenuItem1
             // 
@@ -177,6 +181,12 @@
             this.OffsetFromCenterLabel.Size = new System.Drawing.Size(122, 17);
             this.OffsetFromCenterLabel.Text = "Offset From Center: {}";
             // 
+            // SelectedHexLabel
+            // 
+            this.SelectedHexLabel.Name = "SelectedHexLabel";
+            this.SelectedHexLabel.Size = new System.Drawing.Size(88, 17);
+            this.SelectedHexLabel.Text = "Selected Hex: {}";
+            // 
             // panel1
             // 
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -202,11 +212,9 @@
             this.pictureBox1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseDown);
             this.pictureBox1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseMove);
             // 
-            // SelectedHexLabel
+            // openFileDialog1
             // 
-            this.SelectedHexLabel.Name = "SelectedHexLabel";
-            this.SelectedHexLabel.Size = new System.Drawing.Size(88, 17);
-            this.SelectedHexLabel.Text = "Selected Hex: {}";
+            this.openFileDialog1.FileName = "openFileDialog1";
             // 
             // Form1
             // 
@@ -253,6 +261,7 @@
         private System.Windows.Forms.ToolStripStatusLabel MousePositionLabel;
         private System.Windows.Forms.ToolStripStatusLabel OffsetFromCenterLabel;
         private System.Windows.Forms.ToolStripStatusLabel SelectedHexLabel;
+        private System.Windows.Forms.OpenFileDialog openFileDialog1;
     }
 }
 

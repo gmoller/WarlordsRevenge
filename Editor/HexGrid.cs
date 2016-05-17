@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -32,6 +33,18 @@ namespace WarlordsRevengeEditor
             _cells = new Cell[arraySize, arraySize, arraySize]; // z,y,x
         }
 
+        private delegate void CellHandler(HexCube cube, Cell cell);
+
+        public List<string> GetAllCells()
+        {
+            var cells = new List<string>();
+
+            CellHandler handler = (cube, cell) => cells.Add(string.Format(@"{0};{1}:{2}", cube.X, cube.Y, cell.ToString()));
+            IterateCells(handler);
+
+            return cells;
+        }
+
         public Cell GetCell(HexCube cube)
         {
             if (cube.X + cube.Y + cube.Z != 0)
@@ -45,8 +58,9 @@ namespace WarlordsRevengeEditor
             return cell;
         }
 
-        public void SetCell(HexCube cube, int value)
+        public void SetCell(HexAxial axial, int value)
         {
+            HexCube cube = axial.ToCube();
             try
             {
                 _cells[(int) cube.Z + _size, (int) cube.Y + _size, (int) cube.X + _size].ImageId = value;
@@ -63,7 +77,6 @@ namespace WarlordsRevengeEditor
             Graphics device = Graphics.FromImage(surface);
 
             RenderHexagonImages(device, imageList);
-
             RenderHexagonOutlines(device);
 
             var pen = new Pen(Color.Red, 2);
@@ -74,32 +87,42 @@ namespace WarlordsRevengeEditor
 
         private void RenderHexagonImages(Graphics device, ImageList imageList)
         {
-            for (int cellZ = -_size; cellZ <= _size; cellZ++)
-            {
-                for (int cellY = -_size; cellY <= _size; cellY++)
+            CellHandler handler = delegate(HexCube cube, Cell cell)
                 {
-                    for (int cellX = -_size; cellX <= _size; cellX++)
+                    int imageId = cell.ImageId;
+                    if (imageId >= 1)
                     {
-                        var cube = new HexCube(cellX, cellY, cellZ);
-                        int imageId = GetCell(cube).ImageId;
-
-                        if (imageId >= 1)
-                        {
-                            PointF centerOfHex = HexToPixel(cube); //PointF pos = GetPositionToDrawAt(cube);
-                            var pos = new PointF
-                                {
-                                    X = (centerOfHex.X + _halfMapWidth) - Constants.HALF_HEX_WIDTH,
-                                    Y = (centerOfHex.Y + _halfMapHeight) - Constants.HALF_HEX_HEIGHT
-                                };
-
-                            device.DrawImage(imageList.Images[imageId], pos);
-                        }
+                        PointF centerOfHex = cube.HexToPixel(); //PointF pos = GetPositionToDrawAt(cube);
+                        var pos = new PointF
+                            {
+                                X = (centerOfHex.X + _halfMapWidth) - Constants.HALF_HEX_WIDTH,
+                                Y = (centerOfHex.Y + _halfMapHeight) - Constants.HALF_HEX_HEIGHT
+                            };
+                        device.DrawImage(imageList.Images[imageId], pos);
                     }
-                }
-            }
+                };
+            IterateCells(handler);
         }
 
         private void RenderHexagonOutlines(Graphics device)
+        {
+            CellHandler handler = delegate(HexCube cube, Cell cell)
+                {
+                    PointF centerOfHex = cube.HexToPixel(); //PointF pos = GetPositionToDrawAt(cube);
+                    var pos = new PointF
+                    {
+                        X = (centerOfHex.X + _halfMapWidth),
+                        Y = (centerOfHex.Y + _halfMapHeight)
+                    };
+
+                    var pen = new Pen(Color.Black, 1);
+                    PointF[] corners = Hexagon.GetCorners(pos);
+                    device.DrawLines(pen, corners);
+                };
+            IterateCells(handler);
+        }
+
+        private void IterateCells(CellHandler handler)
         {
             for (int cellZ = -_size; cellZ <= _size; cellZ++)
             {
@@ -111,145 +134,42 @@ namespace WarlordsRevengeEditor
                         Cell cell = GetCell(cube);
                         if (!cell.IsNullCell)
                         {
-                            PointF centerOfHex = HexToPixel(cube); //PointF pos = GetPositionToDrawAt(cube);
-                            var pos = new PointF
-                            {
-                                X = (centerOfHex.X + _halfMapWidth),
-                                Y = (centerOfHex.Y + _halfMapHeight)
-                            };
-
-                            var pen = new Pen(Color.Black, 1);
-                            PointF[] corners = cell.GetCorners(pos);
-                            device.DrawLines(pen, corners);
+                            handler(cube, cell);
                         }
                     }
                 }
             }
         }
 
-        private PointF GetPositionToDrawAt(HexCube cube)
-        {
-            float xOffset;
-            float yOffset;
-            if (cube.X == 0)
-            {
-                xOffset = 0.0f;
-                yOffset = CalculateYOffset(cube);
-            }
-            else
-            {
-                xOffset = Constants.THREE_QUARTERS_HEX_WIDTH * cube.X;
-                yOffset = cube.Y == cube.Z ? 0.0f : CalculateYOffset(cube);
-            }
+        //private PointF GetPositionToDrawAt(HexCube cube)
+        //{
+        //    float xOffset;
+        //    float yOffset;
+        //    if (cube.X == 0)
+        //    {
+        //        xOffset = 0.0f;
+        //        yOffset = CalculateYOffset(cube);
+        //    }
+        //    else
+        //    {
+        //        xOffset = Constants.THREE_QUARTERS_HEX_WIDTH * cube.X;
+        //        yOffset = cube.Y == cube.Z ? 0.0f : CalculateYOffset(cube);
+        //    }
 
-            return new PointF(xOffset, yOffset);
-        }
+        //    return new PointF(xOffset, yOffset);
+        //}
 
-        private float CalculateYOffset(HexCube cube)
-        {
-            float f = Math.Abs(cube.Y - cube.Z) * Constants.HALF;
-            float yOffset = Constants.HEX_HEIGHT * f;
+        //private float CalculateYOffset(HexCube cube)
+        //{
+        //    float f = Math.Abs(cube.Y - cube.Z) * Constants.HALF;
+        //    float yOffset = Constants.HEX_HEIGHT * f;
 
-            if (cube.Y > cube.Z)
-            {
-                yOffset *= -1;
-            }
+        //    if (cube.Y > cube.Z)
+        //    {
+        //        yOffset *= -1;
+        //    }
 
-            return yOffset;
-        }
-
-        private HexAxial ConvertCubeToAxial(HexCube cube)
-        {
-            float q = cube.X;
-            float r = cube.Z;
-            var axial = new HexAxial(q, r);
-
-            return axial;
-        }
-
-        private HexCube ConvertAxialToCube(HexAxial axial)
-        {
-            float x = axial.Q;
-            float z = axial.R;
-            float y = -x - z;
-            var hexCube = new HexCube(x, y, z);
-
-            return hexCube;
-        }
-
-        /// <summary>
-        /// Returns the center pixel of a hexagon
-        /// </summary>
-        /// <param name="cube"></param>
-        private PointF HexToPixel(HexCube cube)
-        {
-            HexAxial axial = ConvertCubeToAxial(cube);
-            float x = Constants.HALF_HEX_WIDTH * 1.5f * axial.Q;
-            //double y = Constants.HALF_HEX_HEIGHT * Math.Sqrt(3) * (axial.R + axial.Q / 2);
-            float y = Constants.HALF_HEX_HEIGHT * 2.0f * (axial.R + axial.Q / 2.0f);
-
-            return new PointF(x, y);
-        }
-
-        /// <summary>
-        /// Returns the center pixel of a hexagon
-        /// </summary>
-        /// <param name="axial"></param>
-        private PointF HexToPixel(HexAxial axial)
-        {
-            float x = Constants.HALF_HEX_WIDTH * 1.5f * axial.Q;
-            //double y = Constants.HALF_HEX_HEIGHT * Math.Sqrt(3) * (axial.R + axial.Q / 2);
-            float y = Constants.HALF_HEX_HEIGHT * 2.0f * (axial.R + axial.Q / 2.0f);
-
-            return new PointF(x, y);
-        }
-
-        public HexCube PixelToHex(PointF pixel)
-        {
-            float q = pixel.X * Constants.TWO_THIRDS / Constants.HALF_HEX_WIDTH;
-            //double r = (-pixel.X / 3.0f + (Math.Sqrt(3)/3.0f) * pixel.Y) / Constants.HALF_HEX_HEIGHT;
-            double r = (-pixel.X / 3.0f + Constants.HALF * pixel.Y) / Constants.HALF_HEX_HEIGHT;
-
-            var axial = new HexAxial(q, (float)r);
-
-            axial = HexRound(axial);
-            HexCube cube = ConvertAxialToCube(axial);
-
-            return cube;
-        }
-
-        private HexAxial HexRound(HexAxial axial)
-        {
-            HexCube cube = ConvertAxialToCube(axial);
-            cube = CubeRound(cube);
-
-            return ConvertCubeToAxial(cube);
-        }
-
-        private HexCube CubeRound(HexCube cube)
-        {
-            double rx = Math.Round(cube.X);
-            double ry = Math.Round(cube.Y);
-            double rz = Math.Round(cube.Z);
-
-            double xDiff = Math.Abs(rx - cube.X);
-            double yDiff = Math.Abs(ry - cube.Y);
-            double zDiff = Math.Abs(rz - cube.Z);
-
-            if (xDiff > yDiff && xDiff > zDiff)
-            {
-                rx = -ry - rz;
-            }
-            else if (yDiff > zDiff)
-            {
-                ry = -rx - rz;
-            }
-            else
-            {
-                rz = -rx - ry;
-            }
-
-            return new HexCube((float)rx, (float)ry, (float)rz);
-        }
+        //    return yOffset;
+        //}
     }
 }
