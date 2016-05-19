@@ -1,18 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
 
 namespace WarlordsRevengeEditor
 {
     public class HexGrid
     {
-        //                                   z, y, x
-        //private int[,,] _cell3D = new int[4, 4, 4] { { { 0,0,0,0 }, { 0,0,3,0 }, { 0,2,0,0 }, { 8,0,0,0 } },
-        //                                             { { 0,0,4,0 }, { 0,1,0,0 }, { 7,0,0,0 }, { 0,0,0,0 } },
-        //                                             { { 0,5,0,0 }, { 6,0,0,0 }, { 0,0,0,0 }, { 0,0,0,0 } },
-        //                                             { { 0,0,0,0 }, { 0,0,0,0 }, { 0,0,0,0 }, { 0,0,0,0 } } };
-
         private readonly int _size;
         private readonly int _mapWidth;
         private readonly float _halfMapWidth;
@@ -31,6 +26,20 @@ namespace WarlordsRevengeEditor
             _halfMapHeight = mapHeight * Constants.HALF;
             int arraySize = (size * 2) + 1;
             _cells = new Cell[arraySize, arraySize, arraySize]; // z,y,x
+
+            for (int cellZ = 0; cellZ < arraySize; cellZ++)
+            {
+                for (int cellY = 0; cellY < arraySize; cellY++)
+                {
+                    for (int cellX = 0; cellX < arraySize; cellX++)
+                    {
+                        if (cellX - size + cellY - size + cellZ - size == 0)
+                        {
+                            _cells[cellZ, cellY, cellX] = new Cell();
+                        }
+                    }
+                }
+            }
         }
 
         private delegate void CellHandler(HexCube cube, Cell cell);
@@ -39,7 +48,11 @@ namespace WarlordsRevengeEditor
         {
             var cells = new List<string>();
 
-            CellHandler handler = (cube, cell) => cells.Add(string.Format(@"{0};{1}:{2}", cube.X, cube.Y, cell.ToString()));
+            CellHandler handler = delegate(HexCube cube, Cell cell)
+                {
+                    HexAxial axial = cube.ToAxial();
+                    cells.Add(string.Format(@"{0};{1}:{2}", axial.Q, axial.R, cell));
+                };
             IterateCells(handler);
 
             return cells;
@@ -47,13 +60,7 @@ namespace WarlordsRevengeEditor
 
         public Cell GetCell(HexCube cube)
         {
-            if (cube.X + cube.Y + cube.Z != 0)
-            {
-                return Cell.NullCell;
-            }
-
             Cell cell = _cells[(int)cube.Z + _size, (int)cube.Y + _size, (int)cube.X + _size];
-            //Console.WriteLine(@"[x:{0} y:{1} z:{2} is {3}]", x, y, z, cell.ImageId);
 
             return cell;
         }
@@ -61,14 +68,32 @@ namespace WarlordsRevengeEditor
         public void SetCell(HexAxial axial, int value)
         {
             HexCube cube = axial.ToCube();
-            try
+            //try
+            //{
+                Cell cell = _cells[(int) cube.Z + _size, (int) cube.Y + _size, (int) cube.X + _size];
+                if (cell == null)
+                {
+                    cell = new Cell();
+                    _cells[(int) cube.Z + _size, (int) cube.Y + _size, (int) cube.X + _size] = cell;
+                }
+                cell.AddTerrainId(value);
+            //}
+            //catch (IndexOutOfRangeException ex)
+            //{
+            //    // do nothing
+            //}
+        }
+
+        public void RemoveImageFromCell(HexAxial axial)
+        {
+            HexCube cube = axial.ToCube();
+            Cell cell = _cells[(int)cube.Z + _size, (int)cube.Y + _size, (int)cube.X + _size];
+            if (cell == null)
             {
-                _cells[(int) cube.Z + _size, (int) cube.Y + _size, (int) cube.X + _size].ImageId = value;
+                cell = new Cell();
+                _cells[(int)cube.Z + _size, (int)cube.Y + _size, (int)cube.X + _size] = cell;
             }
-            catch (IndexOutOfRangeException ex)
-            {
-                // do nothing
-            }
+            cell.RemoveTerrain();
         }
 
         public Bitmap Render(ImageList imageList)
@@ -89,17 +114,51 @@ namespace WarlordsRevengeEditor
         {
             CellHandler handler = delegate(HexCube cube, Cell cell)
                 {
-                    int imageId = cell.ImageId;
-                    if (imageId >= 1)
+                    int imageId;
+                    int i = 0;
+                    do
                     {
-                        PointF centerOfHex = cube.HexToPixel(); //PointF pos = GetPositionToDrawAt(cube);
-                        var pos = new PointF
+                        imageId = cell.GetTerrainId(i++); // TODO: remove this implicit link between terrainid and imagelist somehow
+                        if (imageId >= 0)
+                        {
+                            PointF centerOfHex = cube.HexToPixel();
+                            var pos = new PointF
                             {
                                 X = (centerOfHex.X + _halfMapWidth) - Constants.HALF_HEX_WIDTH,
                                 Y = (centerOfHex.Y + _halfMapHeight) - Constants.HALF_HEX_HEIGHT
                             };
-                        device.DrawImage(imageList.Images[imageId], pos);
-                    }
+
+                            device.DrawImage(imageList.Images[imageId], pos);
+
+                            //if (i == 1)
+                            //{
+                            //    device.DrawImage(imageList.Images[imageId], pos);
+                            //}
+                            //else
+                            //{
+
+                            //    float[][] ptsArray =
+                            //        {
+                            //            new float[] {1, 0, 0, 0, 0},
+                            //            new float[] {0, 1, 0, 0, 0},
+                            //            new float[] {0, 0, 1, 0, 0},
+                            //            new float[] {0, 0, 0, 0.5f, 0},
+                            //            new float[] {0, 0, 0, 0, 1}
+                            //        };
+                            //    var clrMatrix = new ColorMatrix(ptsArray);
+                            //    var imgAttributes = new ImageAttributes();
+                            //    imgAttributes.SetColorMatrix(clrMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+                            //    device.DrawImage(imageList.Images[imageId],
+                            //                     new Rectangle((int) pos.X, (int) pos.Y,
+                            //                                   imageList.Images[imageId].Height,
+                            //                                   imageList.Images[imageId].Width),
+                            //                     0.0f, 0.0f, imageList.Images[imageId].Width,
+                            //                     imageList.Images[imageId].Height,
+                            //                     GraphicsUnit.Pixel, imgAttributes);
+                            //}
+                        }
+                    } while (imageId > 0);
                 };
             IterateCells(handler);
         }
@@ -108,7 +167,7 @@ namespace WarlordsRevengeEditor
         {
             CellHandler handler = delegate(HexCube cube, Cell cell)
                 {
-                    PointF centerOfHex = cube.HexToPixel(); //PointF pos = GetPositionToDrawAt(cube);
+                    PointF centerOfHex = cube.HexToPixel();
                     var pos = new PointF
                     {
                         X = (centerOfHex.X + _halfMapWidth),
@@ -132,7 +191,7 @@ namespace WarlordsRevengeEditor
                     {
                         var cube = new HexCube(cellX, cellY, cellZ);
                         Cell cell = GetCell(cube);
-                        if (!cell.IsNullCell)
+                        if (cell != null)
                         {
                             handler(cube, cell);
                         }
@@ -140,36 +199,5 @@ namespace WarlordsRevengeEditor
                 }
             }
         }
-
-        //private PointF GetPositionToDrawAt(HexCube cube)
-        //{
-        //    float xOffset;
-        //    float yOffset;
-        //    if (cube.X == 0)
-        //    {
-        //        xOffset = 0.0f;
-        //        yOffset = CalculateYOffset(cube);
-        //    }
-        //    else
-        //    {
-        //        xOffset = Constants.THREE_QUARTERS_HEX_WIDTH * cube.X;
-        //        yOffset = cube.Y == cube.Z ? 0.0f : CalculateYOffset(cube);
-        //    }
-
-        //    return new PointF(xOffset, yOffset);
-        //}
-
-        //private float CalculateYOffset(HexCube cube)
-        //{
-        //    float f = Math.Abs(cube.Y - cube.Z) * Constants.HALF;
-        //    float yOffset = Constants.HEX_HEIGHT * f;
-
-        //    if (cube.Y > cube.Z)
-        //    {
-        //        yOffset *= -1;
-        //    }
-
-        //    return yOffset;
-        //}
     }
 }

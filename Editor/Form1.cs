@@ -13,6 +13,7 @@ namespace WarlordsRevengeEditor
         public static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
         private Map _map;
+        private List<Terrain> _terrainList;
 
         private Point _panStartPoint;
 
@@ -21,55 +22,72 @@ namespace WarlordsRevengeEditor
             InitializeComponent();
             FillPaletteControl();
 
-            _map = Map.NewMap("Test", Properties.Settings.Default.MapsPath, 10);
+            string previousMap = Properties.Settings.Default.PreviousMap;
+            if (string.IsNullOrEmpty(previousMap))
+            {
+                NewMap("First");
+            }
+            else
+            {
+                string path = Path.Combine(Environment.CurrentDirectory, Properties.Settings.Default.MapsPath, previousMap + ".map");
+                LoadMap(path);
+            }
 
             pictureBox1.Image = _map.Render(imageList1);
         }
 
         private void FillPaletteControl()
         {
-            string path = GetPalette();
-            List<string> fileNames = LoadImagesIntoImageList(path);
-            AddImagesToListview(fileNames);
+            string[] paths = GetPalettePaths();
+           _terrainList = LoadImagesIntoImageList(paths[0]);
+           AddImagesToListview(_terrainList);
         }
 
-        private string GetPalette()
+        private string[] GetPalettePaths()
         {
-            string path = Properties.Settings.Default.PalettePaths;
+            string paths = Properties.Settings.Default.PalettePaths;
+            string[] p = paths.Split('|');
 
-            return path;
+            return p;
         }
 
-        private List<string> LoadImagesIntoImageList(string path)
+        private List<Terrain> LoadImagesIntoImageList(string path)
         {
-            var fileNames = new List<string>();
-            var dir = new DirectoryInfo(path);
-            foreach (FileInfo file in dir.GetFiles())
+            string path2 = Path.Combine(Environment.CurrentDirectory, path, string.Format("{0}.txt", path));
+            string[] lines = FileReader.ReadFile(path2);
+
+            var terrainList = new List<Terrain>();
+            foreach (string line in lines)
             {
-                try
-                {
-                    imageList1.Images.Add(Image.FromFile(file.FullName));
-                    fileNames.Add(Path.GetFileNameWithoutExtension(file.Name));
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine(@"{0} is not an image file.", file.FullName);
-                }
+                string[] pieces = line.Split(':');
+                var terrain = new Terrain
+                    {
+                        Id = Convert.ToInt32(pieces[0]),
+                        Filename = pieces[1].Replace("\"", string.Empty)
+                    };
+                terrain.Name = Path.GetFileNameWithoutExtension(terrain.Filename);
+                terrainList.Add(terrain);
             }
 
-            return fileNames;
+            foreach (Terrain terrain in terrainList)
+            {
+                string path3 = Path.Combine(Environment.CurrentDirectory, path, terrain.Filename);
+                imageList1.Images.Add(Image.FromFile(path3));
+            }
+
+            return terrainList;
         }
 
-        private void AddImagesToListview(List<string> fileNames)
+        private void AddImagesToListview(IEnumerable<Terrain> terrainList)
         {
             listView1.View = View.LargeIcon;
             imageList1.ImageSize = new Size((int)Constants.HEX_WIDTH, (int)Constants.HEX_HEIGHT);
             imageList1.ColorDepth = ColorDepth.Depth24Bit;
             listView1.LargeImageList = imageList1;
 
-            for (int j = 0; j < imageList1.Images.Count; j++)
+            foreach (Terrain terrain in terrainList)
             {
-                var item = new ListViewItem { ImageIndex = j + 1, Text = fileNames[j] };
+                var item = new ListViewItem { ImageIndex = terrain.Id - 1, Text = terrain.Name, Tag = terrain.Id - 1 };
                 listView1.Items.Add(item);
             }
 
@@ -195,51 +213,101 @@ namespace WarlordsRevengeEditor
 
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
-            if (listView1.SelectedItems.Count > 0)
+            if (listView1.SelectedItems.Count == 1)
             {
-                int imageId = listView1.SelectedItems[0].ImageIndex;
-                _map.SetCell(new Point(e.X, e.Y), imageId);
-                pictureBox1.Image = _map.Render(imageList1);
+                var selected = listView1.SelectedItems[0];
+                _map.SetCell(new Point(e.X, e.Y), (int)selected.Tag);
             }
+            else
+            {
+                _map.RemoveImageFromCell(new Point(e.X, e.Y));
+            }
+
+            Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
+            pictureBox1.Image = _map.Render(imageList1);
         }
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string name = string.Empty;
-            DialogResult dialogResult = InputDialog.ShowInputDialog(@"Enter Map Name", ref name);
-
-            if (dialogResult == DialogResult.OK)
+            if (CheckIfOk("create a new map") == DialogResult.Yes)
             {
-                _map = Map.NewMap(name, Properties.Settings.Default.MapsPath, 10);
-                pictureBox1.Image = _map.Render(imageList1);
+                string name = string.Empty;
+                DialogResult dialogResult = InputDialog.ShowInputDialog(@"Enter Map Name", ref name);
+
+                if (dialogResult == DialogResult.OK)
+                {
+                    NewMap(name);
+                }
             }
+        }
+
+        private void NewMap(string name)
+        {
+            string path = Path.Combine(Environment.CurrentDirectory, Properties.Settings.Default.MapsPath);
+            _map = Map.NewMap(name, path, 10);
+            Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
+            pictureBox1.Image = _map.Render(imageList1);
+        }
+
+        private string AppendAsteriskToName(string name)
+        {
+            return _map.IsDirty ? string.Format("{0}*", name) : name;
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // open file dialog
-            //string path = Path.Combine(Environment.CurrentDirectory, Properties.Settings.Default.MapsPath);
-            string path = Path.Combine(Environment.CurrentDirectory, "Maps");
-            openFileDialog1.Title = @"Open map";
-            openFileDialog1.InitialDirectory = path;
-            openFileDialog1.FileName = string.Empty;
-            openFileDialog1.Filter = @"map files (*.map)|*.map";
-            DialogResult result = openFileDialog1.ShowDialog();
-            if (result == DialogResult.OK)
+            if (CheckIfOk("open a map") == DialogResult.Yes)
             {
-                _map.Load(openFileDialog1.FileName);
-                pictureBox1.Image = _map.Render(imageList1);
+                // open file dialog
+                string path = Path.Combine(Environment.CurrentDirectory, Properties.Settings.Default.MapsPath);
+                openFileDialog1.Title = @"Open map";
+                openFileDialog1.InitialDirectory = path;
+                openFileDialog1.FileName = string.Empty;
+                openFileDialog1.Filter = @"map files (*.map)|*.map";
+                DialogResult result = openFileDialog1.ShowDialog();
+                if (result == DialogResult.OK)
+                {
+                    LoadMap(openFileDialog1.FileName);
+                }
             }
+        }
+
+        private void LoadMap(string path)
+        {
+            _map = Map.LoadMap(path);
+            Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
+            Properties.Settings.Default.PreviousMap = _map.Name;
+            Properties.Settings.Default.Save();
+            pictureBox1.Image = _map.Render(imageList1);
         }
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _map.Save();
+            Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
+            Properties.Settings.Default.PreviousMap = _map.Name;
+            Properties.Settings.Default.Save();
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Application.Exit();
+            if (CheckIfOk("exit") == DialogResult.Yes)
+            {
+                Application.Exit();
+            }
+        }
+
+        private DialogResult CheckIfOk(string s)
+        {
+            if (_map.IsDirty)
+            {
+                DialogResult result = MessageBox.Show(string.Format("Map has not been saved. Are you sure you want to {0}?", s),
+                                                      @"Warning", MessageBoxButtons.YesNo);
+
+                return result;
+            }
+
+            return DialogResult.Yes;
         }
     }
 }
