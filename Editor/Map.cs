@@ -50,17 +50,17 @@ namespace WarlordsRevengeEditor
             return map;
         }
 
-        public void SetCell(Point mousePosition, int terrainId)
+        public void SetCell(Point mousePosition, int layerId, int terrainId)
         {
             HexAxial axial = DetermineHexAtMousePointer(mousePosition);
-            _grid.SetCell(axial, terrainId);
+            _grid.SetCell(axial, layerId, terrainId);
             IsDirty = true;
         }
 
-        public void RemoveImageFromCell(Point mousePosition)
+        public void RemoveImageFromCell(Point mousePosition, int layerId)
         {
             HexAxial axial = DetermineHexAtMousePointer(mousePosition);
-            _grid.RemoveImageFromCell(axial);
+            _grid.RemoveImageFromCell(axial, layerId);
             IsDirty = true;
         }
 
@@ -114,10 +114,15 @@ namespace WarlordsRevengeEditor
                     var axial = new HexAxial(q, r);
 
                     string[] subPieces = pieces[1].Split('|');
+                    int count = 1;
                     foreach (string subPiece in subPieces)
                     {
                         int imageId = Convert.ToInt32(subPiece);
-                        _grid.SetCell(axial, imageId);
+                        if (count <= Layers.NumberOfLayers)
+                        {
+                            _grid.SetCell(axial, count, imageId);
+                        }
+                        count++;
                     }
                 }
             }

@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using WarlordsRevengeEditor.Controls;
 
 namespace WarlordsRevengeEditor
 {
@@ -13,13 +13,16 @@ namespace WarlordsRevengeEditor
         public static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
         private Map _map;
-        private List<Terrain> _terrainList;
+        private readonly Layers _layers = new Layers();
+        private Palette _palette;
 
         private Point _panStartPoint;
+        private MenuStrip _menuStrip;
 
         public Form1()
         {
             InitializeComponent();
+            CreateMenuControl();
             FillPaletteControl();
 
             string previousMap = Properties.Settings.Default.PreviousMap;
@@ -33,154 +36,37 @@ namespace WarlordsRevengeEditor
                 LoadMap(path);
             }
 
-            pictureBox1.Image = _map.Render(imageList1);
+            pictureBox1.Image = _map.Render(_palette.ImageList);
+        }
+
+        private void CreateMenuControl()
+        {
+            // build datastructure
+            var menu = new MenuCreator();
+            var menuItems = menu.CreateMenuDataStructure(_layers, newToolStripMenuItem_Click, openToolStripMenuItem_Click, saveToolStripMenuItem_Click, exitToolStripMenuItem_Click, layerToolStripMenuItem_Click);
+
+            // create a menustrip control from that data structure
+            _menuStrip = menu.CreateMenu(menuItems);
+
+            Controls.Add(_menuStrip);
         }
 
         private void FillPaletteControl()
         {
-            string[] paths = GetPalettePaths();
-           _terrainList = LoadImagesIntoImageList(paths[0]);
-           AddImagesToListview(_terrainList);
-        }
+            _palette = new Palette();
+            _palette.LoadAllTerrain();
 
-        private string[] GetPalettePaths()
-        {
-            string paths = Properties.Settings.Default.PalettePaths;
-            string[] p = paths.Split('|');
+            var myTabControl = new TabControlCreator();
+            var tabControl = myTabControl.Create(_palette.NumberOfPalettes);
 
-            return p;
-        }
-
-        private List<Terrain> LoadImagesIntoImageList(string path)
-        {
-            string path2 = Path.Combine(Environment.CurrentDirectory, path, string.Format("{0}.txt", path));
-            string[] lines = FileReader.ReadFile(path2);
-
-            var terrainList = new List<Terrain>();
-            foreach (string line in lines)
+            for (int i = 0; i < _palette.NumberOfPalettes; i++)
             {
-                string[] pieces = line.Split(':');
-                var terrain = new Terrain
-                    {
-                        Id = Convert.ToInt32(pieces[0]),
-                        Filename = pieces[1].Replace("\"", string.Empty)
-                    };
-                terrain.Name = Path.GetFileNameWithoutExtension(terrain.Filename);
-                terrainList.Add(terrain);
+                ListView listView =_palette.GetListView(i);
+                tabControl.TabPages[i].Controls.Add(listView);
             }
 
-            foreach (Terrain terrain in terrainList)
-            {
-                string path3 = Path.Combine(Environment.CurrentDirectory, path, terrain.Filename);
-                imageList1.Images.Add(Image.FromFile(path3));
-            }
-
-            return terrainList;
+            Controls.Add(tabControl);
         }
-
-        private void AddImagesToListview(IEnumerable<Terrain> terrainList)
-        {
-            listView1.View = View.LargeIcon;
-            imageList1.ImageSize = new Size((int)Constants.HEX_WIDTH, (int)Constants.HEX_HEIGHT);
-            imageList1.ColorDepth = ColorDepth.Depth24Bit;
-            listView1.LargeImageList = imageList1;
-
-            foreach (Terrain terrain in terrainList)
-            {
-                var item = new ListViewItem { ImageIndex = terrain.Id - 1, Text = terrain.Name, Tag = terrain.Id - 1 };
-                listView1.Items.Add(item);
-            }
-
-            ListView_SetSpacing(listView1, (int)Constants.HEX_WIDTH + 12, (int)Constants.HEX_HEIGHT + 4 + 20);
-        }
-
-        public void ListView_SetSpacing(ListView listview, short cx, short cy)
-        {
-            const int lvmFirst = 0x1000;
-            const int lvmSeticonspacing = lvmFirst + 53;
-            // http://msdn.microsoft.com/en-us/library/bb761176(VS.85).aspx
-            // minimum spacing = 4
-            SendMessage(listview.Handle, lvmSeticonspacing, IntPtr.Zero, (IntPtr)MakeLong(cx, cy));
-
-            // http://msdn.microsoft.com/en-us/library/bb775085(VS.85).aspx
-            // DOESN'T WORK!
-            // can't find ListView_SetIconSpacing in dll comctl32.dll
-            //ListView_SetIconSpacing(listView.Handle, 5, 5);
-        }
-
-        public int MakeLong(short lowPart, short highPart)
-        {
-            return (int)(((ushort)lowPart) | (uint)(highPart << 16));
-        }
-
-        //private void SetHexGrid(HexGrid hg)
-        //{
-        //    Console.WriteLine();
-
-        //    hg.SetCell(new HexCube(0, 0, 0), 1);
-        //    hg.GetCell(new HexCube(0, 0, 0)); // 1
-
-        //    hg.SetCell(new HexCube(0, 1, -1), 2);
-        //    hg.GetCell(new HexCube(0, 1, -1)); // 2
-
-        //    hg.SetCell(new HexCube(1, 0, -1), 3);
-        //    hg.GetCell(new HexCube(1, 0, -1)); // 3
-
-        //    hg.SetCell(new HexCube(1, -1, 0), 4);
-        //    hg.GetCell(new HexCube(1, -1, 0)); // 4
-
-        //    hg.SetCell(new HexCube(0, -1, 1), 5);
-        //    hg.GetCell(new HexCube(0, -1, 1)); // 5
-
-        //    hg.SetCell(new HexCube(-1, 0, 1), 6);
-        //    hg.GetCell(new HexCube(-1, 0, 1)); // 6
-
-        //    hg.SetCell(new HexCube(-1, 1, 0), 7);
-        //    hg.GetCell(new HexCube(-1, 1, 0)); // 7
-
-        //    hg.SetCell(new HexCube(-1, 2, -1), 8);
-        //    hg.GetCell(new HexCube(-1, 2, -1)); // 8
-
-        //    hg.SetCell(new HexCube(0, 2, -2), 9);
-        //    hg.GetCell(new HexCube(0, 2, -2)); // 9
-
-        //    hg.SetCell(new HexCube(1, 1, -2), 10);
-        //    hg.GetCell(new HexCube(1, 1, -2)); // 10
-
-        //    hg.SetCell(new HexCube(2, 0, -2), 11);
-        //    hg.GetCell(new HexCube(2, 0, -2)); // 11
-
-        //    hg.SetCell(new HexCube(2, -1, -1), 12);
-        //    hg.GetCell(new HexCube(2, -1, -1)); // 12
-
-        //    hg.SetCell(new HexCube(2, -2, 0), 13);
-        //    hg.GetCell(new HexCube(2, -2, 0)); // 13
-
-        //    hg.SetCell(new HexCube(1, -2, 1), 14);
-        //    hg.GetCell(new HexCube(1, -2, 1)); // 14
-
-        //    hg.SetCell(new HexCube(0, -2, 2), 15);
-        //    hg.GetCell(new HexCube(0, -2, 2)); // 15
-
-        //    hg.SetCell(new HexCube(-1, -1, 2), 16);
-        //    hg.GetCell(new HexCube(-1, -1, 2)); // 16
-
-        //    hg.SetCell(new HexCube(-2, 0, 2), 17);
-        //    hg.GetCell(new HexCube(-2, 0, 2)); // 17
-
-        //    hg.SetCell(new HexCube(-2, 1, 1), 18);
-        //    hg.GetCell(new HexCube(-2, 1, 1)); // 18
-
-        //    hg.SetCell(new HexCube(-2, 2, 0), 19);
-        //    hg.GetCell(new HexCube(-2, 2, 0)); // 19
-
-        //    //hg.SetCell(new HexCube(0, 3, -3), 20);
-        //    //hg.GetCell(new HexCube(0, 3, -3)); // 20
-
-        //    //hg.SetCell(new HexCube(0, 5, -5), 6);
-
-        //    Console.WriteLine();
-        //}
 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
@@ -213,18 +99,53 @@ namespace WarlordsRevengeEditor
 
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
-            if (listView1.SelectedItems.Count == 1)
+            // TODO: fix bug where invalid cell is selected
+            int layerId = DetermineWhichLayerIsCurrentlySelected();
+            int selected = DetermineWhichImageIsCurrentlySelected();
+            if (selected >= 0)
             {
-                var selected = listView1.SelectedItems[0];
-                _map.SetCell(new Point(e.X, e.Y), (int)selected.Tag);
+                _map.SetCell(new Point(e.X, e.Y), layerId, selected);
             }
             else
             {
-                _map.RemoveImageFromCell(new Point(e.X, e.Y));
+                _map.RemoveImageFromCell(new Point(e.X, e.Y), layerId);
             }
 
             Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
-            pictureBox1.Image = _map.Render(imageList1);
+            pictureBox1.Image = _map.Render(_palette.ImageList);
+        }
+
+        private int DetermineWhichLayerIsCurrentlySelected()
+        {
+            int layerIdSelected = -1;
+
+            var layers = (ToolStripDropDownItem)_menuStrip.Items[1];
+            int count = 1;
+            foreach (ToolStripItem layer in layers.DropDownItems)
+            {
+                var l = (ToolStripMenuItem)layer;
+                if (l.Checked)
+                {
+                    layerIdSelected = count;
+                }
+                count++;
+            }
+
+            return layerIdSelected;
+        }
+
+        private int DetermineWhichImageIsCurrentlySelected()
+        {
+            var ctrl = (TabControl)Controls["tabControl"];
+            TabPage selectedPage = ctrl.SelectedTab;
+            var listView = (ListView)selectedPage.Controls["listView"];
+            if (listView.SelectedItems.Count == 1)
+            {
+                ListViewItem selected = listView.SelectedItems[0];
+                return (int)selected.Tag;
+            }
+
+            return -1;
         }
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
@@ -246,7 +167,7 @@ namespace WarlordsRevengeEditor
             string path = Path.Combine(Environment.CurrentDirectory, Properties.Settings.Default.MapsPath);
             _map = Map.NewMap(name, path, 10);
             Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
-            pictureBox1.Image = _map.Render(imageList1);
+            pictureBox1.Image = _map.Render(_palette.ImageList);
         }
 
         private string AppendAsteriskToName(string name)
@@ -278,7 +199,7 @@ namespace WarlordsRevengeEditor
             Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
             Properties.Settings.Default.PreviousMap = _map.Name;
             Properties.Settings.Default.Save();
-            pictureBox1.Image = _map.Render(imageList1);
+            pictureBox1.Image = _map.Render(_palette.ImageList);
         }
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
@@ -308,6 +229,27 @@ namespace WarlordsRevengeEditor
             }
 
             return DialogResult.Yes;
+        }
+
+        private void layerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var menuClicked = (ToolStripDropDownItem)sender;
+
+            var layers = (ToolStripDropDownItem)_menuStrip.Items[1];
+
+            foreach (ToolStripItem layer in layers.DropDownItems)
+            {
+                if (menuClicked.Text == layer.Text)
+                {
+                    var l = (ToolStripMenuItem)layer;
+                    l.Checked = true;
+                }
+                else
+                {
+                    var l = (ToolStripMenuItem)layer;
+                    l.Checked = false;
+                }
+            }
         }
     }
 }

@@ -39,6 +39,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cell.cs" />
+    <Compile Include="Controls\TabControlCreator.cs" />
+    <Compile Include="Controls\Palette.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="FileReader.cs" />
@@ -54,10 +56,12 @@
     <Compile Include="HexCube.cs" />
     <Compile Include="HexGrid.cs" />
     <Compile Include="InputDialog.cs" />
+    <Compile Include="Layers.cs" />
     <Compile Include="Map.cs" />
+    <Compile Include="Controls\MenuCreator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Terrain.cs" />
+    <Compile Include="TerrainList.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

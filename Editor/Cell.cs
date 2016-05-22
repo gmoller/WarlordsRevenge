@@ -1,57 +1,59 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Globalization;
 
 namespace WarlordsRevengeEditor
 {
     public class Cell
     {
-        private readonly List<int> _terrainIds = new List<int>();
+        private readonly int[] _terrainIds;
 
-        public void AddTerrainId(int terrainId)
+        public Cell()
         {
-            if (_terrainIds.Count == 0)
+            _terrainIds = new int[Layers.NumberOfLayers];
+            for (int i = 0; i < Layers.NumberOfLayers; i++)
             {
-                _terrainIds.Add(terrainId);
-            }
-            else
-            {
-                if (_terrainIds[_terrainIds.Count - 1] == -1)
-                {
-                    _terrainIds[_terrainIds.Count - 1] = terrainId;
-                }
-                else
-                {
-                    _terrainIds.Add(terrainId);
-                }
+                _terrainIds[i] = -1;
             }
         }
 
-        public void RemoveTerrain()
+        public void AddTerrainId(int layerId, int terrainId)
         {
-            if (_terrainIds.Count > 0)
-            {
-                _terrainIds.RemoveAt(_terrainIds.Count - 1);
-            }
+            ValidateLayerParameter(layerId);
+
+            _terrainIds[layerId - 1] = terrainId;
         }
 
-        public int GetTerrainId(int layer)
+        public void RemoveTerrain(int layerId)
         {
-            if (_terrainIds.Count == layer)
-            {
-                return -1; // no terrain
-            }
+            ValidateLayerParameter(layerId);
 
-            return _terrainIds[layer];
+            _terrainIds[layerId - 1] = -1;
+        }
+
+        public int GetTerrainId(int layerId)
+        {
+            ValidateLayerParameter(layerId);
+
+            return _terrainIds[layerId - 1];
+        }
+
+        private void ValidateLayerParameter(int layerId)
+        {
+            if (layerId <= 0 || layerId > Layers.NumberOfLayers)
+            {
+                throw new ApplicationException(string.Format("Layer must be between 1 and {0}", Layers.NumberOfLayers));
+            }
         }
 
         public override string ToString()
         {
-            if (_terrainIds.Count == 0)
+            string terrain = string.Empty;
+            for (int i = 0; i < Layers.NumberOfLayers; i++)
             {
-                return "-1";
+                string s = _terrainIds[i].ToString(CultureInfo.InvariantCulture);
+                terrain +=  s + '|';
             }
 
-            string terrain = _terrainIds.Aggregate(string.Empty, (current, terrainId) => current + terrainId + "|");
             terrain = terrain.TrimEnd('|');
 
             return string.Format("{0}", terrain);

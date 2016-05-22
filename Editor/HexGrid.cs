@@ -65,35 +65,29 @@ namespace WarlordsRevengeEditor
             return cell;
         }
 
-        public void SetCell(HexAxial axial, int value)
+        private Cell GetCell(HexAxial axial)
         {
             HexCube cube = axial.ToCube();
-            //try
-            //{
-                Cell cell = _cells[(int) cube.Z + _size, (int) cube.Y + _size, (int) cube.X + _size];
-                if (cell == null)
-                {
-                    cell = new Cell();
-                    _cells[(int) cube.Z + _size, (int) cube.Y + _size, (int) cube.X + _size] = cell;
-                }
-                cell.AddTerrainId(value);
-            //}
-            //catch (IndexOutOfRangeException ex)
-            //{
-            //    // do nothing
-            //}
-        }
-
-        public void RemoveImageFromCell(HexAxial axial)
-        {
-            HexCube cube = axial.ToCube();
-            Cell cell = _cells[(int)cube.Z + _size, (int)cube.Y + _size, (int)cube.X + _size];
+            Cell cell = GetCell(cube);
             if (cell == null)
             {
                 cell = new Cell();
                 _cells[(int)cube.Z + _size, (int)cube.Y + _size, (int)cube.X + _size] = cell;
             }
-            cell.RemoveTerrain();
+
+            return cell;
+        }
+
+        public void SetCell(HexAxial axial, int layerId, int value)
+        {
+            Cell cell = GetCell(axial);
+            cell.AddTerrainId(layerId, value);
+        }
+
+        public void RemoveImageFromCell(HexAxial axial, int layerId)
+        {
+            Cell cell = GetCell(axial);
+            cell.RemoveTerrain(layerId);
         }
 
         public Bitmap Render(ImageList imageList)
@@ -114,11 +108,9 @@ namespace WarlordsRevengeEditor
         {
             CellHandler handler = delegate(HexCube cube, Cell cell)
                 {
-                    int imageId;
-                    int i = 0;
-                    do
+                    for (int i = 1; i <= Layers.NumberOfLayers; i++)
                     {
-                        imageId = cell.GetTerrainId(i++); // TODO: remove this implicit link between terrainid and imagelist somehow
+                        int imageId = cell.GetTerrainId(i);
                         if (imageId >= 0)
                         {
                             PointF centerOfHex = cube.HexToPixel();
@@ -129,36 +121,8 @@ namespace WarlordsRevengeEditor
                             };
 
                             device.DrawImage(imageList.Images[imageId], pos);
-
-                            //if (i == 1)
-                            //{
-                            //    device.DrawImage(imageList.Images[imageId], pos);
-                            //}
-                            //else
-                            //{
-
-                            //    float[][] ptsArray =
-                            //        {
-                            //            new float[] {1, 0, 0, 0, 0},
-                            //            new float[] {0, 1, 0, 0, 0},
-                            //            new float[] {0, 0, 1, 0, 0},
-                            //            new float[] {0, 0, 0, 0.5f, 0},
-                            //            new float[] {0, 0, 0, 0, 1}
-                            //        };
-                            //    var clrMatrix = new ColorMatrix(ptsArray);
-                            //    var imgAttributes = new ImageAttributes();
-                            //    imgAttributes.SetColorMatrix(clrMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-
-                            //    device.DrawImage(imageList.Images[imageId],
-                            //                     new Rectangle((int) pos.X, (int) pos.Y,
-                            //                                   imageList.Images[imageId].Height,
-                            //                                   imageList.Images[imageId].Width),
-                            //                     0.0f, 0.0f, imageList.Images[imageId].Width,
-                            //                     imageList.Images[imageId].Height,
-                            //                     GraphicsUnit.Pixel, imgAttributes);
-                            //}
                         }
-                    } while (imageId > 0);
+                    }
                 };
             IterateCells(handler);
         }
