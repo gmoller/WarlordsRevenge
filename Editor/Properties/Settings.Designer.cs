@@ -25,7 +25,7 @@ namespace WarlordsRevengeEditor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Palette1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Palette1|Palette2")]
         public string PalettePaths {
             get {
                 return ((string)(this["PalettePaths"]));

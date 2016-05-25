@@ -28,7 +28,22 @@ namespace WarlordsRevengeEditor.Controls
         }
 
         public int NumberOfPalettes { get { return _allTerrainList.Count; } }
-        public ImageList ImageList { get { return _allTerrainList[0].ImageList; } }
+
+        public ImageList[] GetAllImageLists()
+        {
+            var imageLists = new ImageList[NumberOfPalettes];
+            for (int i = 0; i < NumberOfPalettes; i++)
+            {
+                imageLists[i] = _allTerrainList[i].ImageList;
+            }
+
+            return imageLists;
+        }
+
+        public ImageList GetImageList(int index)
+        {
+            return _allTerrainList[index].ImageList;
+        }
 
         public ListView GetListView(int index)
         {

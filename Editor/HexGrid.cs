@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Windows.Forms;
 
 namespace WarlordsRevengeEditor
@@ -50,8 +48,11 @@ namespace WarlordsRevengeEditor
 
             CellHandler handler = delegate(HexCube cube, Cell cell)
                 {
-                    HexAxial axial = cube.ToAxial();
-                    cells.Add(string.Format(@"{0};{1}:{2}", axial.Q, axial.R, cell));
+                    if (!cell.IsEmpty())
+                    {
+                        HexAxial axial = cube.ToAxial();
+                        cells.Add(string.Format(@"{0};{1}:{2}", axial.Q, axial.R, cell));
+                    }
                 };
             IterateCells(handler);
 
@@ -78,10 +79,10 @@ namespace WarlordsRevengeEditor
             return cell;
         }
 
-        public void SetCell(HexAxial axial, int layerId, int value)
+        public void SetCell(HexAxial axial, int layerId, int paletteId, int terrainId)
         {
             Cell cell = GetCell(axial);
-            cell.AddTerrainId(layerId, value);
+            cell.AddCellData(layerId, paletteId, terrainId);
         }
 
         public void RemoveImageFromCell(HexAxial axial, int layerId)
@@ -90,12 +91,12 @@ namespace WarlordsRevengeEditor
             cell.RemoveTerrain(layerId);
         }
 
-        public Bitmap Render(ImageList imageList)
+        public Bitmap Render(ImageList[] images)
         {
             var surface = new Bitmap(_mapWidth, _mapHeight);
             Graphics device = Graphics.FromImage(surface);
 
-            RenderHexagonImages(device, imageList);
+            RenderHexagonImages(device, images);
             RenderHexagonOutlines(device);
 
             var pen = new Pen(Color.Red, 2);
@@ -104,14 +105,14 @@ namespace WarlordsRevengeEditor
             return surface;
         }
 
-        private void RenderHexagonImages(Graphics device, ImageList imageList)
+        private void RenderHexagonImages(Graphics device, ImageList[] images)
         {
             CellHandler handler = delegate(HexCube cube, Cell cell)
                 {
                     for (int i = 1; i <= Layers.NumberOfLayers; i++)
                     {
-                        int imageId = cell.GetTerrainId(i);
-                        if (imageId >= 0)
+                        CellData data = cell.GetCellData(i);
+                        if (data.TerrainId >= 0)
                         {
                             PointF centerOfHex = cube.HexToPixel();
                             var pos = new PointF
@@ -120,7 +121,8 @@ namespace WarlordsRevengeEditor
                                 Y = (centerOfHex.Y + _halfMapHeight) - Constants.HALF_HEX_HEIGHT
                             };
 
-                            device.DrawImage(imageList.Images[imageId], pos);
+                            int paletteId = data.PaletteId;
+                            device.DrawImage(images[paletteId].Images[data.TerrainId], pos);
                         }
                     }
                 };

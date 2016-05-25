@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="PalettePaths" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Palette1</Value>
+      <Value Profile="(Default)">Palette1|Palette2</Value>
     </Setting>
     <Setting Name="MapsPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">Maps</Value>

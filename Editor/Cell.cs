@@ -1,40 +1,42 @@
 ﻿using System;
-using System.Globalization;
 
 namespace WarlordsRevengeEditor
 {
     public class Cell
     {
-        private readonly int[] _terrainIds;
+        private readonly CellData[] _data;
 
         public Cell()
         {
-            _terrainIds = new int[Layers.NumberOfLayers];
+            _data = new CellData[Layers.NumberOfLayers];
             for (int i = 0; i < Layers.NumberOfLayers; i++)
             {
-                _terrainIds[i] = -1;
+                _data[i].PaletteId = 0;
+                _data[i].TerrainId = -1;
             }
         }
 
-        public void AddTerrainId(int layerId, int terrainId)
+        public void AddCellData(int layerId, int paletteId, int terrainId)
         {
             ValidateLayerParameter(layerId);
 
-            _terrainIds[layerId - 1] = terrainId;
+            _data[layerId - 1].PaletteId = paletteId;
+            _data[layerId - 1].TerrainId = terrainId;
         }
 
         public void RemoveTerrain(int layerId)
         {
             ValidateLayerParameter(layerId);
 
-            _terrainIds[layerId - 1] = -1;
+            _data[layerId - 1].PaletteId = 0;
+            _data[layerId - 1].TerrainId = -1;
         }
 
-        public int GetTerrainId(int layerId)
+        public CellData GetCellData(int layerId)
         {
             ValidateLayerParameter(layerId);
 
-            return _terrainIds[layerId - 1];
+            return _data[layerId - 1];
         }
 
         private void ValidateLayerParameter(int layerId)
@@ -45,18 +47,38 @@ namespace WarlordsRevengeEditor
             }
         }
 
-        public override string ToString()
+        public bool IsEmpty()
         {
-            string terrain = string.Empty;
+            bool empty = true;
             for (int i = 0; i < Layers.NumberOfLayers; i++)
             {
-                string s = _terrainIds[i].ToString(CultureInfo.InvariantCulture);
-                terrain +=  s + '|';
+                if (_data[i].TerrainId >= 0)
+                {
+                    empty = false;
+                }
             }
 
-            terrain = terrain.TrimEnd('|');
-
-            return string.Format("{0}", terrain);
+            return empty;
         }
+
+        public override string ToString()
+        {
+            string data = string.Empty;
+            for (int i = 0; i < Layers.NumberOfLayers; i++)
+            {
+                string s = string.Format("{0};{1}", _data[i].PaletteId, _data[i].TerrainId);
+                data += s + '|';
+            }
+
+            data = data.TrimEnd('|');
+
+            return data;
+        }
+    }
+
+    public struct CellData
+    {
+        public int PaletteId { get; set; }
+        public int TerrainId { get; set; }
     }
 }

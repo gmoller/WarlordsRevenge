@@ -50,10 +50,10 @@ namespace WarlordsRevengeEditor
             return map;
         }
 
-        public void SetCell(Point mousePosition, int layerId, int terrainId)
+        public void SetCell(Point mousePosition, int layerId, int paletteId, int terrainId)
         {
             HexAxial axial = DetermineHexAtMousePointer(mousePosition);
-            _grid.SetCell(axial, layerId, terrainId);
+            _grid.SetCell(axial, layerId, paletteId, terrainId);
             IsDirty = true;
         }
 
@@ -72,9 +72,9 @@ namespace WarlordsRevengeEditor
             return axial;
         }
 
-        public Bitmap Render(ImageList imageList)
+        public Bitmap Render(ImageList[] images)
         {
-            return _grid.Render(imageList);
+            return _grid.Render(images);
         }
 
         private void Load(string path)
@@ -107,25 +107,66 @@ namespace WarlordsRevengeEditor
                 else
                 {
                     string[] pieces = line.Split(':');
-                    string[] coords = pieces[0].Split(';');
-                    float q = Convert.ToSingle(coords[0]);
-                    float r = Convert.ToSingle(coords[1]);
 
-                    var axial = new HexAxial(q, r);
+                    //string[] coords = pieces[0].Split(';');
+                    //float q = Convert.ToSingle(coords[0]);
+                    //float r = Convert.ToSingle(coords[1]);
+                    //
+                    //var axial = new HexAxial(q, r);
 
-                    string[] subPieces = pieces[1].Split('|');
-                    int count = 1;
-                    foreach (string subPiece in subPieces)
+                    var axial = GetHexagon(pieces[0]);
+
+                    //string[] subPieces = pieces[1].Split('|');
+                    //int count = 1;
+                    //foreach (string subPiece in subPieces)
+                    //{
+                    //    int imageId = Convert.ToInt32(subPiece);
+                    //    if (count <= Layers.NumberOfLayers)
+                    //    {
+                    //        _grid.SetCell(axial, count, imageId);
+                    //    }
+                    //    count++;
+                    //}
+
+                    CellData[] cellData = GetCellData(pieces[1]);
+                    for (int i = 0; i < cellData.Length; i++)
                     {
-                        int imageId = Convert.ToInt32(subPiece);
-                        if (count <= Layers.NumberOfLayers)
-                        {
-                            _grid.SetCell(axial, count, imageId);
-                        }
-                        count++;
+                        _grid.SetCell(axial, i + 1, cellData[i].PaletteId, cellData[i].TerrainId);
                     }
                 }
             }
+        }
+
+        private HexAxial GetHexagon(string coordsString)
+        {
+            string[] coords = coordsString.Split(';');
+            float q = Convert.ToSingle(coords[0]);
+            float r = Convert.ToSingle(coords[1]);
+
+            var axial = new HexAxial(q, r);
+
+            return axial;
+        }
+
+        private CellData[] GetCellData(string cellDataString)
+        {
+            var cellData = new List<CellData>();
+
+            string[] pieces = cellDataString.Split('|');
+            int count = 1;
+            foreach (string piece in pieces)
+            {
+                string[] subPieces = piece.Split(';');
+                int paletteId = Convert.ToInt32(subPieces[0]);
+                int terrainId = Convert.ToInt32(subPieces[1]);
+                if (count <= Layers.NumberOfLayers)
+                {
+                    cellData.Add(new CellData { PaletteId = paletteId, TerrainId = terrainId });
+                }
+                count++;
+            }
+
+            return cellData.ToArray();
         }
 
         private void WriteToFile(string path)

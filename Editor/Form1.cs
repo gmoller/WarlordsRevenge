@@ -36,7 +36,7 @@ namespace WarlordsRevengeEditor
                 LoadMap(path);
             }
 
-            pictureBox1.Image = _map.Render(_palette.ImageList);
+            pictureBox1.Image = _map.Render(_palette.GetAllImageLists());
         }
 
         private void CreateMenuControl()
@@ -101,10 +101,11 @@ namespace WarlordsRevengeEditor
         {
             // TODO: fix bug where invalid cell is selected
             int layerId = DetermineWhichLayerIsCurrentlySelected();
-            int selected = DetermineWhichImageIsCurrentlySelected();
-            if (selected >= 0)
+            int selectedPalette = DetermineWhichPaletteIsCurrentlySelected();
+            int selectedImage = DetermineWhichImageIsCurrentlySelected();
+            if (selectedImage >= 0)
             {
-                _map.SetCell(new Point(e.X, e.Y), layerId, selected);
+                _map.SetCell(new Point(e.X, e.Y), layerId, selectedPalette, selectedImage);
             }
             else
             {
@@ -112,7 +113,7 @@ namespace WarlordsRevengeEditor
             }
 
             Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
-            pictureBox1.Image = _map.Render(_palette.ImageList);
+            pictureBox1.Image = _map.Render(_palette.GetAllImageLists());
         }
 
         private int DetermineWhichLayerIsCurrentlySelected()
@@ -132,6 +133,13 @@ namespace WarlordsRevengeEditor
             }
 
             return layerIdSelected;
+        }
+
+        private int DetermineWhichPaletteIsCurrentlySelected()
+        {
+            var ctrl = (TabControl)Controls["tabControl"];
+
+            return ctrl.SelectedIndex;
         }
 
         private int DetermineWhichImageIsCurrentlySelected()
@@ -167,7 +175,7 @@ namespace WarlordsRevengeEditor
             string path = Path.Combine(Environment.CurrentDirectory, Properties.Settings.Default.MapsPath);
             _map = Map.NewMap(name, path, 10);
             Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
-            pictureBox1.Image = _map.Render(_palette.ImageList);
+            pictureBox1.Image = _map.Render(_palette.GetAllImageLists());
         }
 
         private string AppendAsteriskToName(string name)
@@ -199,7 +207,7 @@ namespace WarlordsRevengeEditor
             Text = string.Format("Warlords Revenge Editor [{0}]", AppendAsteriskToName(_map.Name));
             Properties.Settings.Default.PreviousMap = _map.Name;
             Properties.Settings.Default.Save();
-            pictureBox1.Image = _map.Render(_palette.ImageList);
+            pictureBox1.Image = _map.Render(_palette.GetAllImageLists());
         }
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
